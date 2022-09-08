@@ -25,20 +25,31 @@ export default class NewBill {
     formData.append('file', file)
     formData.append('email', email)
 
-    this.store
-      .bills()
-      .create({
-        data: formData,
-        headers: {
-          noContentType: true
-        }
-      })
-      .then(({fileUrl, key}) => {
-        console.log(fileUrl)
-        this.billId = key
-        this.fileUrl = fileUrl
-        this.fileName = fileName
-      }).catch(error => console.error(error))
+    // Les types acceptés pour le fichier
+    const filesTypeOk = ["image/jpeg", "image/jpg", "image/png"];
+    if (!filesTypeOk.includes(file.type)) {
+      console.error(
+        "Le fichier justificatif doit être une image (jpeg, jpg ou png)"
+      );
+      // Le fichier choisi n'est pas accepté: RaB -> affiche "Aucun fichier choisi"
+      this.document.querySelector(`input[data-testid="file"]`).value = "";
+    } else {
+      // Le type de fichier accepté
+      this.store
+        .bills()
+        .create({
+          data: formData,
+          headers: {
+            noContentType: true
+          }
+        })
+        .then(({fileUrl, key}) => {
+          console.log(fileUrl)
+          this.billId = key
+          this.fileUrl = fileUrl
+          this.fileName = fileName
+        }).catch(error => console.error(error))
+    }
   }
   handleSubmit = e => {
     e.preventDefault()
