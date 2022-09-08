@@ -2,7 +2,8 @@ import calendarIcon from '../assets/svg/calendar.js'
 import euroIcon from '../assets/svg/euro.js'
 import pctIcon from '../assets/svg/pct.js'
 import eyeWhite from '../assets/svg/eye_white.js'
-import { formatDate } from '../app/format.js'
+import downloadWhite from '../assets/svg/download_white.js'
+import { formatDate, extFile } from '../app/format.js'
 
 export const modal = () => (`
   <div class="modal fade" id="modaleFileAdmin1" data-testid="modaleFileAdmin" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
@@ -22,7 +23,8 @@ export const modal = () => (`
   `)
 
 export default (bill) => {
-
+  // pdf ou type image
+  const ext = extFile(bill.fileName);
   return (`
     <div class="container dashboard-form" data-testid="dashboard-form">
       <div class="row">
@@ -70,7 +72,10 @@ export default (bill) => {
             <div class='input-field input-flex file-flex'>
             <span id="file-name-admin">${bill.fileName}</span>
             <div class='icons-container'>
-              <span id="icon-eye-d" data-testid="icon-eye-d" data-bill-url="${bill.fileUrl}"> ${eyeWhite} </span>
+              <span id="icon-eye-d" data-testid="icon-eye-d" data-bill-url="${bill.fileUrl}" data-bill-filename="${bill.fileName}">${eyeWhite}</span>
+              ${ext === 'pdf' ? (`
+              <span id="icon-download-d" data-testid="icon-download-d" data-bill-url="${bill.fileUrl}" data-bill-filename="${bill.fileName}"> ${downloadWhite}</span>
+             `) : (`&nbsp;`)}
             </div>
           </div>
         </div>

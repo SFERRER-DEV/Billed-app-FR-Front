@@ -17,3 +17,10 @@ export const formatStatus = (status) => {
       return "Refused"
   }
 }
+
+// Obtenir l'extension d'un nom de fichier 
+export const extFile = (fileName) => {
+  const arr = /^.+\.([^.]+)$/.exec(fileName);
+  const ext = arr == null ? "" : arr[1].trim().toLowerCase();
+  return ext;
+}

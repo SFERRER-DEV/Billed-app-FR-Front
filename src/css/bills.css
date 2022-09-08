@@ -57,9 +57,9 @@
 .icon-actions {
   display: flex;
   -webkit-box-pack: justify;
-  -webkit-justify-content: space-around;
+  -webkit-justify-content: space-between;
   -ms-flex-pack: justify;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
 }
 
