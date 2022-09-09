@@ -35,7 +35,7 @@ export const card = (bill) => {
   firstAndLastNames.split('.')[1] : firstAndLastNames
 
   return (`
-    <div class='bill-card' id='open-bill${bill.id}' data-testid='open-bill${bill.id}'>
+    <div class='bill-card' id='open-bill${bill.id}' data-status='${bill.status}' data-testid='open-bill${bill.id}'>
       <div class='bill-card-name-container'>
         <div class='bill-card-name'> ${firstName} ${lastName} </div>
         <span class='bill-card-grey'> ... </span>
@@ -67,6 +67,17 @@ export const getStatus = (index) => {
   }
 }
 
+export const getIndex = (status) => {
+  switch (status) {
+    case "pending":
+      return 1
+    case "accepted":
+      return 2
+    case "refused":
+      return 3
+  }
+}
+
 export default class {
   constructor({ document, onNavigate, store, bills, localStorage }) {
     this.document = document
@@ -87,9 +98,13 @@ export default class {
     if (typeof $('#modaleFileAdmin1').modal === 'function') $('#modaleFileAdmin1').modal('show')
   }
 
-  handleEditTicket(e, bill, bills) {
+  handleEditTicket(e, bill, bills, index) {
     if (this.counter === undefined || this.id !== bill.id) this.counter = 0
     if (this.id === undefined || this.id !== bill.id) this.id = bill.id
+
+    // Cliquer sur une note doit faire correspondre son index avec celui de la catégorie
+    if (this.index === undefined || this.index !== index) this.index = index
+
     if (this.counter % 2 === 0) {
       bills.forEach(b => {
         $(`#open-bill${b.id}`).css({ background: '#0D5AE5' })
@@ -132,9 +147,17 @@ export default class {
     this.onNavigate(ROUTES_PATH['Dashboard'])
   }
 
-  handleShowTickets(e, bills, index) {
-    if (this.counter === undefined || this.index !== index) this.counter = 0
+  handleShowTickets(e, bills, index) { 
+    // Cette catégorie est-elle dépliée à l'écran ? 
+    const isUnfold = $(`#status-bills-container${index}`).html() !== "";  
+
+    if (this.counter === undefined || (this.index !== index && !isUnfold)) this.counter = 0
     if (this.index === undefined || this.index !== index) this.index = index
+
+    // Si ce n'est pas le tout 1er clic sur une catégorie dépliée
+    // mais que son compteur est déjà pair alors le corriger en le rendant impair.
+    if (this.counter > 0 && this.counter % 2 === 0 && isUnfold) this.counter++
+
     if (this.counter % 2 === 0) {
       $(`#arrow-icon${this.index}`).css({ transform: 'rotate(0deg)'})
       $(`#status-bills-container${this.index}`)
@@ -148,11 +171,18 @@ export default class {
     }
 
     bills.forEach(bill => {
-      $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
+      // L'élément HTMLDiv pour d'un ticket
+      const divBill = $(`#open-bill${bill.id}`);
+      // Le statut de cette note de frais est dans un data attibut du ticket
+      const status = divBill.attr("data-status");
+      // L'index de la catégorie est utile aussi pour le click sur un ticket
+      const index = getIndex(status);
+      // Enlever les évènements précédents pour n'avoir toujours qu'un seul clic
+      // Envoyer aussi l'index de la catégorie déterminé par le statut de la note de frais
+      divBill.off('click').on('click', (e) => this.handleEditTicket(e, bill, bills, index)) 
     })
 
     return bills
-
   }
 
   getBillsAllUsers = () => {
