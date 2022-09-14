@@ -37,9 +37,8 @@ export default class {
           .map(doc => {
             try {
               return {
-                ...doc,
-                date: formatDate(doc.date),
-                status: formatStatus(doc.status)
+                // Obtenir les données décomposées telles qu'en base de données (=brutes).
+                ...doc
               }
             } catch(e) {
               // if for some reason, corrupted data was introduced, we manage here failing formatDate function
@@ -47,8 +46,9 @@ export default class {
               console.log(e,'for',doc)
               return {
                 ...doc,
+                // Ce remplacement des propriétés après la décomposition n'est plus utile car il n'y a plus de formatage
                 date: doc.date,
-                status: formatStatus(doc.status)
+                status: doc.status
               }
             }
           })
