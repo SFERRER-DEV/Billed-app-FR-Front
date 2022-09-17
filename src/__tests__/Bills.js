@@ -26,12 +26,17 @@ describe("Given I am connected as an employee", () => {
       await waitFor(() => screen.getByTestId('icon-window'))
       const windowIcon = screen.getByTestId('icon-window')
       //to-do write expect expression
-
+      expect(windowIcon).toBeTruthy()
     })
     test("Then bills should be ordered from earliest to latest", () => {
       document.body.innerHTML = BillsUI({ data: bills })
-      const dates = screen.getAllByText(/^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$/i).map(a => a.innerHTML)
+      // Les dates sont affichées avec un format custom français.
+      // Les fixtures factures  contiennent ces données brutes : 01/01/01 02/02/02, 03/03/03, 04/04/04
+      // affichées en '4 Avr. 04, 3 Mar. 03, 2 Fév. 02, 1 Jan 01'
+      let re = /^(0?[1-9]|[12][0-9]|3[01])\s(Jan.|Fév.|Mar.|Avr.|Mai|Jui.|Jui.|Aoû.|Sep.|Oct.|Nov.|Déc.)\s([0-9]{2})$/i
+      const dates = screen.getAllByText(re).map(a => a.innerHTML)
       const antiChrono = (a, b) => ((a < b) ? 1 : -1)
+      // Attention le choix des dates dans fixture peut faire échouer le test, recpecter la règle
       const datesSorted = [...dates].sort(antiChrono)
       expect(dates).toEqual(datesSorted)
     })
