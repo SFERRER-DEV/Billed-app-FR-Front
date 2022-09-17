@@ -105,7 +105,7 @@ export default class {
     const ext = extFile(billFileName);
     if (ext === "pdf") {
       // Ajouter un conteneur pour le justificatif preuve
-      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container"></div>`)
+      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class='bill-proof-container'" data-testid='proof-container'></div>`)
       // Le document PDF est à afficher dans un canvas
       const location = $("#modaleFileAdmin1").find(".bill-proof-container");
       // il faut créer un objet Canvas pour l'utiliser
@@ -116,7 +116,7 @@ export default class {
       viewFile(billUrl, canvas);
 
     } else {
-      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container"><img width=${imgWidth} src=${billUrl} alt="Bill"/></div>`)
+      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class='bill-proof-container' data-testid='proof-container'><img width=${imgWidth} src=${billUrl} alt="Bill"/></div>`)
     }
     $('#modaleFileAdmin1').find(".modal-title").html(billFileName)
     if (typeof $('#modaleFileAdmin1').modal === 'function') $('#modaleFileAdmin1').modal('show')
@@ -136,7 +136,7 @@ export default class {
     // Utiliser la solution file-saver pour télécharger un justificatif PDF
     downloadFile(billUrl, billFileName);
 
-    $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container">Le justificatif PDF a été téléchargé</div>`)
+    $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container" data-testid='proof-container'>Le justificatif PDF a été téléchargé</div>`)
     if (typeof $('#modaleFileAdmin1').modal === 'function') $('#modaleFileAdmin1').modal('show')
   }
 

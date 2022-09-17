@@ -3,6 +3,7 @@
  */
 
 import {fireEvent, screen, waitFor} from "@testing-library/dom"
+import {toHaveTextContent} from "@testing-library/jest-dom"
 import userEvent from '@testing-library/user-event'
 import DashboardFormUI from "../views/DashboardFormUI.js"
 import DashboardUI from "../views/DashboardUI.js"
@@ -12,6 +13,7 @@ import { localStorageMock } from "../__mocks__/localStorage.js"
 import mockStore from "../__mocks__/store"
 import { bills } from "../fixtures/bills"
 import router from "../app/Router"
+import { readyException } from "jquery"
 
 jest.mock("../app/store", () => mockStore)
 
@@ -89,6 +91,41 @@ describe('Given I am connected as an Admin', () => {
       await waitFor(() => screen.getByTestId(`open-billBeKy5Mo4jkmdfPGYpTxZ`) )
       expect(screen.getByTestId(`open-billBeKy5Mo4jkmdfPGYpTxZ`)).toBeTruthy()
     })
+
+    test("Then je replie la catégorie En attente pour masquer ses notes de frais", async() => {
+      // Arrange
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname })
+      }
+
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Admin'
+      }))
+
+      const dashboard = new Dashboard({
+        document, onNavigate, store: null, bills:bills, localStorage: window.localStorage
+      })
+      document.body.innerHTML = DashboardUI({ data: { bills } })
+
+      const handleShowTickets1 = jest.fn((e) => dashboard.handleShowTickets(e, bills, 1))
+      
+      const icon1 = screen.getByTestId('arrow-icon1')
+
+      icon1.addEventListener('click', handleShowTickets1)
+
+      // Act
+      userEvent.click(icon1) // Déplier
+      userEvent.click(icon1) // Replier
+
+      // Assert     
+      const pendingBills = await waitFor(() => screen.queryAllByTestId(/open-bill/))
+      // Aucune note de frais en attente n'est affichée puisque la catégorie est repliée
+      expect(pendingBills.length).toBe(0)
+      // Le compteur de clic du container Dashboard doit être paire
+      expect(dashboard.counter % 2).toBe(0)   
+    })
+    
   })
 
   describe('When I am on Dashboard page and I click on edit icon of a card', () => {
@@ -307,3 +344,124 @@ describe("Given I am a user connected as Admin", () => {
   })
 })
 
+describe("Given Je suis connecté en Admin au tableau de bord sur les notes de frais", () => {
+  // Préparation commune aux tests qui suivent
+  beforeEach(() => {
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+    window.localStorage.setItem('user', JSON.stringify({
+      type: 'Admin'
+    }))
+  })
+  describe("When J'édite sur une note de frais", () => {
+    // Arrange
+    // Le container testé
+    let containerDashboard
+    // L'identifiant d'une note de frais avec un justificatif PDF à tester
+    let idBillPDF = 'ixV4o473TTVh58NiCEHofz'
+    // L'identifiant d'une note de frais avec un justificatif JPG à tester
+    let idBillJPG = 'UIUZtnPQvnbFnB0ozvJh'
+    // Les deux notes de frais à tester avec leur nom de fichier      
+    let testingBills = []
+    // Les fonctions downloadFile et viewFile utilisant les bibliothèques  file-saver et PDF.js
+    const pdf = require('../app/pdf')
+    // Préparation commune aux tests qui suivent
+    beforeEach(async () => {
+      // Routage pour navigation
+      const onNavigate = (pathname) => {
+        document.body.innerHTML  = ROUTES({ pathname })
+      }
+      // Le container testé avec des notes de frais provenant du store mocké
+      containerDashboard = new Dashboard({
+        document, onNavigate, store: mockStore, bills:[], localStorage: window.localStorage
+      })
+      // Temoin d'appel de la catégorie à déplier
+      let handleShowTickets2 
+      // Le mock store contient deux notes de frais accepted utilisées ici 
+      containerDashboard.getBillsAllUsers().then(bills => {
+        document.body.innerHTML  = DashboardUI({data: {bills}})
+        // Noeud 2 = Validé = Statut accepted
+        handleShowTickets2 = jest.fn((e) => containerDashboard.handleShowTickets(e, bills, 2))
+        testingBills = bills.filter(bill => bill.id === idBillPDF || bill.id === idBillJPG)
+                               .map(bill => { return {'id':bill.id, 'fileName':bill.fileName}  }  )                           
+        //new Dashboard({document, onNavigate, store: mockStore, bills, localStorage})        
+      })
+      .catch(error => {
+        document.body.innerHTML  = ROUTES({ pathname, error })
+      })
+      
+      // Mocker l'appel aux bibliothèques file-saver et PDF.js
+      jest.spyOn(pdf,'downloadFile').mockImplementation(() => {
+        return Promise.resolve('Fake downloaded !')
+      }) 
+      jest.spyOn(pdf,'viewFile').mockImplementation(() => {
+        return Promise.resolve('Fake viewed !')
+      })       
+
+      // Cliquer sur le noeud "Validé"
+      const icon2 = await waitFor(()=> screen.getByTestId('arrow-icon2'))
+      icon2.addEventListener('click', handleShowTickets2)
+      userEvent.click(icon2)
+
+      // Bien appelé 
+      expect(handleShowTickets2).toHaveBeenCalled()
+      // Il y a la note de frais avec un justificatif PNG id:UIUZtnPQvnbFnB0ozvJh
+      expect(await waitFor(()=> screen.getByTestId(`open-bill${idBillJPG}`))).toBeTruthy()
+      // il y a la note de frais avec un justificatif PDF id:ixV4o473TTVh58NiCEHofz
+      expect(await waitFor(()=> screen.getByTestId(`open-bill${idBillPDF}`))).toBeTruthy()
+      // Le deux notes de frais PDF et JPG ont été trouvées dans les bllls du store mocké
+      expect(testingBills.length).toBe(2)
+    })
+    afterEach(() => {
+      document.body.innerHTML = ''
+    })    
+    test("Then je vois le justificatif PDF d'une note de frais", async () => {
+      // Arrange
+      // Le nom du fichier PDF attendu dans le titre de la modale
+      const exceptedFilename = testingBills.find(bill => bill.id === idBillPDF).fileName
+      // Editer la note de frais possèdant un justificatif PDF
+      const iconEdit = screen.getByTestId(`open-bill${idBillPDF}`)
+      userEvent.click(iconEdit)
+      // Définir la fonction appelée par l'action
+      const handleClickIconEye = jest.fn(() => containerDashboard.handleClickIconEye())
+      // L'icone voir un justificatif
+      const eyeIcon = screen.getByTestId("icon-eye-d") 
+      // Ajoiuter l'évènement pour voir un justificatif PDF
+      eyeIcon.addEventListener('click', handleClickIconEye)
+      // Le témoin de l'appel
+      const spyHandleClickIconEye = jest.spyOn(containerDashboard, 'handleClickIconEye').mockImplementation()
+
+      // Act: voir le justificatif
+      userEvent.click(eyeIcon)
+
+      // Assert
+      expect(spyHandleClickIconEye).toHaveBeenCalled()
+      // Le nom du fichier justificatif de la note de frais est bien écrit dans la modale
+      expect(screen.getByTestId('modal-long-title')).toHaveTextContent(exceptedFilename)
+    })
+    test("Then je télécharge le justificatif PDF d'une note de frais", async () => {
+      // Arrange      
+      // Le message affiché dans la modale après le téléchargement
+      const exceptedMessage = 'Le justificatif PDF a été téléchargé'
+      // ...
+      const iconEdit = screen.getByTestId(`open-bill${idBillPDF}`)
+      // Editer la note de frais possèdant un justificatif PDF
+      userEvent.click(iconEdit)      
+      // Définir la fonction appelée par l'action
+      const handleClickIconDownload = jest.fn(() => containerDashboard.handleClickIconDownload())
+      // L'icone télécharger un justificatif
+      const downloadIcon = screen.getByTestId("icon-download-d") 
+      // Ajouter l'évènement pour télécharger un justificatif PDF 
+      downloadIcon.addEventListener('click', handleClickIconDownload) 
+      // Le témoin de l'appel
+      const spyHandleClickIconDownload = jest.spyOn(containerDashboard, 'handleClickIconDownload').mockImplementation(() => {})          
+
+      // Act: télécharger le justificatif
+      userEvent.click(downloadIcon)
+
+      // Assert
+       expect(spyHandleClickIconDownload).toHaveBeenCalled()
+      // Le message "Le justificatif PDF a été téléchargé" est bien écrit à l'écran
+      expect(screen.getByTestId('proof-container')).toHaveTextContent(exceptedMessage)
+    })
+  })
+})

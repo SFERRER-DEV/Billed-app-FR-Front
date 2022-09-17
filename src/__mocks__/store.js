@@ -31,6 +31,21 @@ const mockedBills = {
         "commentAdmin": "en fait non"
       },
       {
+        "id": "ixV4o473TTVh58NiCEHofz",
+        "name": "test4",
+        "email": "a@a",
+        "type": "Restaurants et bars",   
+        "vat": "20",
+        "pct": 20,
+        "commentAdmin": "PDF OK",
+        "amount": 100,
+        "status": "accepted",        
+        "date": "2004-04-04",
+        "commentary": "Un test avec un justificatif PDF",
+        "fileName": "invoice-12345.pdf",                          
+        "fileUrl": "http://localhost:5678/public\\74fc3e76757e14ec6152caaad3e4a646"
+      },
+      {
         "id": "UIUZtnPQvnbFnB0ozvJh",
         "name": "test3",
         "email": "a@a",
@@ -59,7 +74,8 @@ const mockedBills = {
         "commentary": "test2",
         "type": "Restaurants et bars",
         "fileUrl": "https://test.storage.tld/v0/b/billable-677b6.a…f-1.jpg?alt=media&token=4df6ed2c-12c8-42a2-b013-346c1346f732"
-      }])
+      }
+    ])
 
   },
   create(bill) {

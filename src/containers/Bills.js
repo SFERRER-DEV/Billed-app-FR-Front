@@ -1,10 +1,7 @@
 import { ROUTES_PATH } from '../constants/routes.js'
-import { formatDate, formatStatus } from "../app/format.js"
+//import { formatDate, formatStatus } from "../app/format.js"
 import Logout from "./Logout.js"
 import { downloadFile, viewFile } from '../app/pdf.js'
-
-//var FileSaver = require('file-saver'); @TODO: DOUADA
-//import { saveAs } from 'file-saver';   @TODO: DOUADA
 
 export default class {
   constructor({ document, onNavigate, store, localStorage }) {
@@ -40,22 +37,29 @@ export default class {
 
     if (fileExt === "pdf") {
       // Le document PDF est à afficher dans un canvas
-      const location = $("#modaleFile").find(".modal-content");
+      const location = $("#modaleFile").find(".modal-body");
 
-      // il faut créer un objet Canvas pour l'utiliser
+      // il faut créer un objet Canvas pour l'utiliser ~ BillsUI 
       let canvas = document.createElement("canvas");
       $(canvas).addClass("bill-proof-container");
+      $(canvas).attr("data-testid","justificatif-pdf");
       // Ajouter le Canvas pour contenir le PDF dans la modale
       $(location).append(canvas);
-
+      // Voir la 1ere page pdf du justificatif
       viewFile(billUrl, canvas);
 
     } else {
       // Afficher un justificatif de type image
       const imgWidth = Math.floor($('#modaleFile').width() * 0.5)
-      $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container"><img width=${imgWidth} src=${billUrl} alt="Bill" /></div>`)
+      $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class='bill-proof-container' data-testid='justificatif-image'><img width=${imgWidth} src=${billUrl} alt="Bill" /></div>`)
     }
-    $('#modaleFile').modal('show')
+
+    // En environnement Jest: 
+    // The promise rejected with the reason "TypeError: $(...).modal is not a function".] 
+    // { code: 'ERR_UNHANDLED_REJECTION'}
+    if (typeof jest === 'undefined') {
+      $('#modaleFile').modal('show')
+    }
   }
 
   handleClickIconDownload = async (icon) => {
@@ -72,10 +76,16 @@ export default class {
     downloadFile(billUrl, fileName);
 
     // Afficher la modale
-    $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container">
+    $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class='bill-proof-container'>
       Le justificatif PDF a été téléchargé
       </div>`)
-    $('#modaleFile').modal('show')
+
+    // En environnement Jest: 
+    // The promise rejected with the reason "TypeError: $(...).modal is not a function".] 
+    // { code: 'ERR_UNHANDLED_REJECTION'}
+    if (typeof jest === 'undefined') {
+      $('#modaleFile').modal('show')
+    }
   }
 
   getBills = () => {
@@ -89,6 +99,7 @@ export default class {
             try {
               return {
                 // Obtenir les données décomposées telles qu'en base de données (=brutes).
+                // Les données sont formatées lors du rendu et non maintenant
                 ...doc
               }
             } catch(e) {
@@ -97,9 +108,10 @@ export default class {
               console.log(e,'for',doc)
               return {
                 ...doc,
-                // Ce remplacement des propriétés après la décomposition n'est plus utile car il n'y a plus de formatage
-                date: doc.date,
-                status: doc.status
+                // Ce remplacement des propriétés après la décomposition n'est plus utile 
+                // car il n'y a plus de formatage ici
+                // date: doc.date,
+                // status: doc.status
               }
             }
           })

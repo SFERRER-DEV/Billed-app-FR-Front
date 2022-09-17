@@ -28,13 +28,20 @@ export default class NewBill {
     // Les types acceptés pour le fichier
     const filesTypeOk = ["image/jpeg", "image/jpg", "image/png",  "image/gif", "application/pdf"];
     if (!filesTypeOk.includes(file.type)) {
-      console.log(
+      console.error(
         "Le fichier justificatif doit être une image (jpeg, jpg ou png) ou un document PDF."
       );
-      // Le fichier choisi n'est pas accepté: RaB -> affiche "Aucun fichier choisi"
-      this.document.querySelector(`input[data-testid="file"]`).value = "";
+      // Le fichier choisi n'est pas accepté 
+      const input = this.document.querySelector(`input[data-testid="file"]`)
+      $(input).val(""); // RaB -> affiche "Aucun fichier choisi"
+      console.log("Aucun fichier choisi")
+      // Raz du Dom
+      let prevEle = $(input).prev()
+      let newEle = $(input).clone()
+      $(input).remove();
+      $(prevEle).after(newEle);
     } else {
-      // Le type de fichier accepté
+      // Le type de fichier est accepté
       this.store
         .bills()
         .create({
@@ -44,11 +51,20 @@ export default class NewBill {
           }
         })
         .then(({fileUrl, key}) => {
-          console.log(fileUrl)
+          // La propriété fileUrl n'est pas présente dans la réponse JSON du CREATE  
+          // Elle est ajoutée par la fonction du Backend getFileURL(http://backurl + filePath) 
+          // dans les réponses de GET et de LIST
+          // Les notes de frais mockées simulent cette propriété fileURL
+          // pour l'écrire sur la console et la tester dans Jest
+          if (fileUrl !== undefined) console.log(fileUrl)
           this.billId = key
           this.fileUrl = fileUrl
           this.fileName = fileName
-        }).catch(error => console.error(error))
+        }).catch(
+           (error) => { console.error(error) }
+        ).finally(
+          () => console.info(this.billId)
+        )
     }
   }
   handleSubmit = e => {
@@ -75,13 +91,12 @@ export default class NewBill {
       this.updateBill(bill)
       this.onNavigate(ROUTES_PATH['Bills'])
     } else {
-      console.error(`La date de la note de frais est invalide: ${dateObject}`);
-      // Rester sur la page de création d'un note de frais
-      this.onNavigate(ROUTES_PATH['NewBill'])
+      console.error(`La date de la note de frais est invalide ${dateObject}`);
     }
   }
 
   // not need to cover this function by tests
+  /* istanbul ignore next */
   updateBill = (bill) => {
     if (this.store) {
       this.store
