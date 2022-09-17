@@ -14,7 +14,7 @@ const row = (bill) => {
       <td>${bill.amount} €</td>
       <td>${formatStatus(bill.status)}</td>
       <td>
-        ${Actions(bill.fileUrl)}
+        ${Actions(bill.fileUrl, bill.fileName)/** envoyer le nom du fichier avec son extension  */}
       </td>
     </tr>
     `)

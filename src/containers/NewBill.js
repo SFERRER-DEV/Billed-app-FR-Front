@@ -26,10 +26,10 @@ export default class NewBill {
     formData.append('email', email)
 
     // Les types acceptés pour le fichier
-    const filesTypeOk = ["image/jpeg", "image/jpg", "image/png"];
+    const filesTypeOk = ["image/jpeg", "image/jpg", "image/png",  "image/gif", "application/pdf"];
     if (!filesTypeOk.includes(file.type)) {
       console.error(
-        "Le fichier justificatif doit être une image (jpeg, jpg ou png)"
+        "Le fichier justificatif doit être une image (jpeg, jpg ou png) ou un document PDF."
       );
       // Le fichier choisi n'est pas accepté: RaB -> affiche "Aucun fichier choisi"
       this.document.querySelector(`input[data-testid="file"]`).value = "";

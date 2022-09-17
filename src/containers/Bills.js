@@ -20,10 +20,30 @@ export default class {
     this.onNavigate(ROUTES_PATH['NewBill'])
   }
 
-  handleClickIconEye = (icon) => {
+   handleClickIconEye = async (icon) => {
     const billUrl = icon.getAttribute("data-bill-url")
-    const imgWidth = Math.floor($('#modaleFile').width() * 0.5)
-    $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container"><img width=${imgWidth} src=${billUrl} alt="Bill" /></div>`)
+    const fileExt = icon.getAttribute("data-file-ext")
+    const fileName = "Justificatif.pdf";
+
+    if (fileExt === "pdf") {
+      // Utiliser la solution file-saver pour télécharger un justificatif PDF
+      fetch("https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.js")
+      .then(response => response.text())
+      .then(script => eval(script))
+      .then(() => { 
+        fetch(billUrl)
+        .then(res => res.blob())
+        .then(blob => saveAs(blob, fileName))
+        });
+      // Afficher la modale
+      $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container">
+       Le justificatif PDF a été téléchargé
+       </div>`)
+    } else {
+      // Afficher un justificatif de type image
+      const imgWidth = Math.floor($('#modaleFile').width() * 0.5)
+      $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container"><img width=${imgWidth} src=${billUrl} alt="Bill" /></div>`)
+    } 
     $('#modaleFile').modal('show')
   }
 
