@@ -21,7 +21,10 @@ const row = (bill) => {
   }
 
 const rows = (data) => {
-  return (data && data.length) ? data.sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).map(bill => row(bill)).join("") : ""
+  return (data && data.length) ? data.sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+  // Les changements de justificatifs ajoutent des enregistrements incomplets en base de données
+  .filter(bill => bill.status !== null)
+  .map(bill => row(bill)).join("") : ""
 }
 
 export default ({ data: bills, loading, error }) => {
