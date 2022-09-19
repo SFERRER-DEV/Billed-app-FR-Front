@@ -1,4 +1,4 @@
-import { formatDate } from '../app/format.js'
+import { formatDate, extFile } from '../app/format.js'
 import DashboardFormUI from '../views/DashboardFormUI.js'
 import BigBilledIcon from '../assets/svg/big_billed.js'
 import { ROUTES_PATH } from '../constants/routes.js'
@@ -93,7 +93,22 @@ export default class {
     const billUrl = $('#icon-eye-d').attr("data-bill-url")
     const billFileName = $('#icon-eye-d').attr("data-bill-filename")
     const imgWidth = Math.floor($('#modaleFileAdmin1').width() * 0.8)
-    $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;'><img width=${imgWidth} src=${billUrl} alt="Bill"/></div>`)
+    // pdf ou type image
+    const ext = extFile(billFileName);
+    if (ext === "pdf") {
+      // Utiliser la solution file-saver pour télécharger un justificatif PDF
+      fetch("https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.js")
+      .then(response => response.text())
+      .then(script => eval(script))
+      .then(() => { 
+          fetch(billUrl)
+          .then(res => res.blob())
+          .then(blob => saveAs(blob, billFileName))
+      });
+      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;'>Le justificatif PDF a été téléchargé</div>`)
+    } else {
+      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;'><img width=${imgWidth} src=${billUrl} alt="Bill"/></div>`)
+    }
     $('#modaleFileAdmin1').find(".modal-title").html(billFileName)
     if (typeof $('#modaleFileAdmin1').modal === 'function') $('#modaleFileAdmin1').modal('show')
   }
