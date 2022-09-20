@@ -1,6 +1,10 @@
 import { ROUTES_PATH } from '../constants/routes.js'
 import { formatDate, formatStatus } from "../app/format.js"
 import Logout from "./Logout.js"
+import { downloadFile, viewFile } from '../app/pdf.js'
+
+//var FileSaver = require('file-saver'); @TODO: DOUADA
+//import { saveAs } from 'file-saver';   @TODO: DOUADA
 
 export default class {
   constructor({ document, onNavigate, store, localStorage }) {
@@ -44,51 +48,7 @@ export default class {
       // Ajouter le Canvas pour contenir le PDF dans la modale
       $(location).append(canvas);
 
-      // La librairie PDF.js : nécessite deux scripts 
-      const urls = ["https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.js",
-                    "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.js"];
-      // qui sont téléchargés depuis un CDN
-      await Promise.all(
-        urls.map(async url => {
-          const response = await fetch(url);
-          return response.text();
-        }))
-      // et exécutés pour être utilisés
-      .then(scripts => scripts.map(script => eval(script)))
-      .then(() => {
-        // Obtenir un blob à partir de l'url du fichier justificatif
-        fetch(billUrl)
-        .then(res => res.blob())
-        .then(blob => blob.arrayBuffer())
-        .then(data => {
-          // Utiliser la librairie Pdfjs pour générer le rendu du document
-          // Préparer un fake worker 
-          pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-          pdfjsLib.getDocument(data).promise.then(pdf => {
-            // Ne prendre que la première page du justificatif
-            let pageNumber = 1;
-            pdf.getPage(pageNumber).then(function(page) {
-              console.log("Page loaded");
-              let scale =  1;
-              let viewport = page.getViewport({scale: scale});
-              // Préparer l'objet Canvas en utilisant les dimensions de la page du PDF
-              let context = canvas.getContext('2d');
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
-              // Afficher le rendu de la page PDF dans le contexte du Canvas
-              let renderContext = {
-                canvasContext: context,
-                viewport: viewport
-              };
-              let renderTask = page.render(renderContext);
-              renderTask.promise.then(function () {
-                 console.log("Page rendered");
-              });
-            });
-          })
-        })
-      });
-
+      viewFile(billUrl, canvas);
 
     } else {
       // Afficher un justificatif de type image
@@ -107,15 +67,10 @@ export default class {
     $(".bill-proof-container").remove();
 
     const fileName = "Justificatif.pdf";
+
     // Utiliser la solution file-saver pour télécharger un justificatif PDF
-    fetch("https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.js")
-    .then(response => response.text())
-    .then(script => eval(script))
-    .then(() => { 
-      fetch(billUrl)
-      .then(res => res.blob())
-      .then(blob => saveAs(blob, fileName))
-      });
+    downloadFile(billUrl, fileName);
+
     // Afficher la modale
     $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container">
       Le justificatif PDF a été téléchargé
