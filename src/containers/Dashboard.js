@@ -4,6 +4,7 @@ import BigBilledIcon from '../assets/svg/big_billed.js'
 import { ROUTES_PATH } from '../constants/routes.js'
 import USERS_TEST from '../constants/usersTest.js'
 import Logout from "./Logout.js"
+import { downloadFile, viewFile } from '../app/pdf.js'
 
 export const filteredBills = (data, status) => {
   return (data && data.length) ?
@@ -93,23 +94,46 @@ export default class {
     const billUrl = $('#icon-eye-d').attr("data-bill-url")
     const billFileName = $('#icon-eye-d').attr("data-bill-filename")
     const imgWidth = Math.floor($('#modaleFileAdmin1').width() * 0.8)
+
+    // Effacer d'éventuels éléments précédement affichés dans la modale
+    $(".bill-proof-container").remove();
+
     // pdf ou type image
     const ext = extFile(billFileName);
     if (ext === "pdf") {
-      // Utiliser la solution file-saver pour télécharger un justificatif PDF
-      fetch("https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.js")
-      .then(response => response.text())
-      .then(script => eval(script))
-      .then(() => { 
-          fetch(billUrl)
-          .then(res => res.blob())
-          .then(blob => saveAs(blob, billFileName))
-      });
-      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;'>Le justificatif PDF a été téléchargé</div>`)
+      // Ajouter un conteneur pour le justificatif preuve
+      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container"></div>`)
+      // Le document PDF est à afficher dans un canvas
+      const location = $("#modaleFileAdmin1").find(".bill-proof-container");
+      // il faut créer un objet Canvas pour l'utiliser
+      let canvas = document.createElement("canvas");
+      // Ajouter le Canvas pour contenir le PDF dans la modale
+      $(location).append(canvas);
+
+      viewFile(billUrl, canvas);
+
     } else {
-      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;'><img width=${imgWidth} src=${billUrl} alt="Bill"/></div>`)
+      $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container"><img width=${imgWidth} src=${billUrl} alt="Bill"/></div>`)
     }
     $('#modaleFileAdmin1').find(".modal-title").html(billFileName)
+    if (typeof $('#modaleFileAdmin1').modal === 'function') $('#modaleFileAdmin1').modal('show')
+  }
+
+  handleClickIconDownload = () => {
+    const billUrl = $('#icon-eye-d').attr("data-bill-url")
+    const billFileName = $('#icon-eye-d').attr("data-bill-filename")
+
+    // Effacer d'éventuels éléments précédement affichés dans la modale
+    $(".bill-proof-container").remove();
+
+    // pdf ou type image
+    const ext = extFile(billFileName)
+    if (ext !== "pdf") return
+
+    // Utiliser la solution file-saver pour télécharger un justificatif PDF
+    downloadFile(billUrl, billFileName);
+
+    $('#modaleFileAdmin1').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container">Le justificatif PDF a été téléchargé</div>`)
     if (typeof $('#modaleFileAdmin1').modal === 'function') $('#modaleFileAdmin1').modal('show')
   }
 
@@ -138,6 +162,7 @@ export default class {
       this.counter ++
     }
     $('#icon-eye-d').click(this.handleClickIconEye)
+    $('#icon-download-d').click(this.handleClickIconDownload)
     $('#btn-accept-bill').click((e) => this.handleAcceptSubmit(e, bill))
     $('#btn-refuse-bill').click((e) => this.handleRefuseSubmit(e, bill))
   }

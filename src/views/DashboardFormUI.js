@@ -72,7 +72,10 @@ export default (bill) => {
             <div class='input-field input-flex file-flex'>
             <span id="file-name-admin">${bill.fileName}</span>
             <div class='icons-container'>
-              <span id="icon-eye-d" data-testid="icon-eye-d" data-bill-url="${bill.fileUrl}" data-bill-filename="${bill.fileName}"> ${(ext === "pdf") ? downloadWhite : eyeWhite} </span>
+              <span id="icon-eye-d" data-testid="icon-eye-d" data-bill-url="${bill.fileUrl}" data-bill-filename="${bill.fileName}">${eyeWhite}</span>
+              ${ext === 'pdf' ? (`
+              <span id="icon-download-d" data-testid="icon-download-d" data-bill-url="${bill.fileUrl}" data-bill-filename="${bill.fileName}"> ${downloadWhite}</span>
+             `) : (`&nbsp;`)}
             </div>
           </div>
         </div>
