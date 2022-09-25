@@ -8,7 +8,10 @@ import { downloadFile, viewFile } from '../app/pdf.js'
 
 export const filteredBills = (data, status) => {
   return (data && data.length) ?
-    data.filter(bill => {
+    data
+    // Attention aux dates incorrectes dans la base de données
+    .filter(bill => !isNaN(Date.parse(bill.date)))
+    .filter(bill => {
       let selectCondition
 
       // in jest environment
