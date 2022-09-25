@@ -21,9 +21,12 @@ const row = (bill) => {
   }
 
 const rows = (data) => {
-  return (data && data.length) ? data.sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+  return (data && data.length) ? 
   // Les changements de justificatifs ajoutent des enregistrements incomplets en base de données
-  .filter(bill => bill.status !== null)
+  // et les dates peuvent s'enregistrées à null.
+  data
+  .filter(bill => bill.status !== null && !isNaN(Date.parse(bill.date)))
+  .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
   .map(bill => row(bill)).join("") : ""
 }
 
