@@ -19,7 +19,7 @@ import  *  as fixtures from "../fixtures/billsPost"
 // Mocks
 import { localStorageMock } from "../__mocks__/localStorage.js"
 import mockStore from "../__mocks__/storeEmpty"
-//import { readyException } from "jquery"
+
 
 beforeAll(() => {
   // Mock du Local Storage
@@ -28,9 +28,11 @@ beforeAll(() => {
     type: 'Employee',
     email: "b@b"
   }))
+  jest.mock("../app/store", () => mockStore)
 })
-afterAll(() => {
 
+afterAll(() => {
+//
 })
 
 describe("Given I am connected as an employee", () => {
@@ -43,20 +45,22 @@ describe("Given I am connected as an employee", () => {
       const root = document.createElement("div")
       root.setAttribute("id", "root")
       document.body.append(root)
+
       // Remplace l'implémentation sur le terminal
-      errSpy = jest.spyOn(console, 'error').mockImplementation(()=>{});
-      logSpy = jest.spyOn(console, 'log').mockImplementation(()=>{});
+      logSpy = jest.spyOn(console, 'log')
+      errSpy = jest.spyOn(console, 'error')
     })
     // Nettoyage
     afterEach(() => {
       errSpy.mockRestore();
       logSpy.mockRestore();
       document.body.innerHTML = ''
-    });
+    })
 
   describe("When I am on NewBill Page", () => {
     test("Then le formulaire pour envoyer une note de frais est affiché", async() => {
       // Arrange
+      const exceptedHtml = 'Envoyer une note de frais'
       // Routage: page login
       router()
 
@@ -66,16 +70,16 @@ describe("Given I am connected as an employee", () => {
 
       // Assert
       expect(await waitFor(() => screen.getByTestId('form-new-bill'))).toBeTruthy()
-      expect(await screen.findByText('Envoyer une note de frais')).toBeInTheDocument()
+      expect(await screen.findByText(exceptedHtml)).toBeInTheDocument()
     })
 
-    test("Then une date corrompue saisie à la place du calendrier est traitée", () => {
+    test("Then une date corrompue est saisie à la place du calendrier", () => {
       // Arrange
+      const exceptedErrorMessage = 'La date de la note de frais est invalide 3131-31-31'
       // Routage: page login
       router()
       // se placer sur #employee/bill/new
       window.onNavigate(ROUTES_PATH.NewBill) 
-
       // Le formulaire
       const form = getByTestId(document.body, 'form-new-bill')
       // Le calendrier
@@ -85,16 +89,16 @@ describe("Given I am connected as an employee", () => {
       // ... soumettre une date corrompue comme en manipulant le HTML du formulaire
       datepicker.value = '3131-31-31'
       // Le bouton Envoyer
-      const button = getByRole(form, 'button');
+      const send = getByRole(form, 'button');
 
       // Act
-      userEvent.click(button)
+      userEvent.click(send)
 
       // Assert
-      expect(console.error.mock.calls).toEqual([['La date de la note de frais est invalide 3131-31-31']])
+      expect(console.error.mock.calls).toEqual([[exceptedErrorMessage]])
     })
 
-    test("Then certains champs sont obligatoires et doivent être renseignés", async() => {
+    test("Then certains champs obligatoires doivent être renseignés", async() => {
       // Arrange 
       // Afficher le formulaire de créattion vierge
        document.body.innerHTML = NewBillUI()
@@ -144,8 +148,9 @@ describe("Given I am connected as an employee", () => {
       expect(commentary.validity.valid).toBeTruthy()
     })
 
-    test("Then un justificatif doit être téléchargé et peut être changé lors de la création", async() => {
+    test("Then un justificatif doit être téléchargé et peut être changé", async() => {
       // Arrange
+      const exceptedLogMessage = 'https://fakeurl:5678/fakepath/edcba'
       const onNavigate = (pathname) => {
         document.body.innerHTML = ROUTES({ pathname })
         console.log(pathname)
@@ -172,20 +177,18 @@ describe("Given I am connected as an employee", () => {
       // Assert
       // Les uploads écrivent toujours le même fake fileUrl sur la console
       await waitFor(() => expect(logSpy).toBeCalledTimes(2))
-      expect(console.log.mock.calls).toEqual([['https://fakeurl:5678/fakepath/edcba'],
-                                              ['https://fakeurl:5678/fakepath/edcba']])
+      expect(console.log.mock.calls).toEqual([[exceptedLogMessage],
+                                              [exceptedLogMessage]])
     })
   })
 
-  describe("When Je renseigne complètement une note de frais dans le formulaire de création", () => {
+  describe("When une nouvelle note de frais est complètement renseignée dans le formulaire", () => {
         // Arrange
-        // Le container de création d'un note de frais
-        let newBill
         // Fonction utile routage ~ route()
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname })
-          console.info(pathname)
         }
+        let newBill
         // Une note de test valide
         let bill
         // Formulaire
@@ -199,11 +202,18 @@ describe("Given I am connected as an employee", () => {
         let pct // required
         let commentary 
         let file // required
+        // Bouton envoyer
+        let send
 
         // Préparation commune aux tests qui suivent
         beforeEach(() => {
           // Tous les champs de cette note de test sont renseignés
           bill =  fixtures.bills[0]
+          // Mock
+           jest.spyOn(mockStore, "bills")
+          // mockStore.bills.mockImplementationOnce( () => {
+          //   return {  create :  () => { return Promise.resolve({fileUrl: `https://fakeurl:5678/fakepath/edcba`, key : '67890' }) } }
+          // })
 
           // 1) Afficher le formulaire de création vierge pour saisir
           document.body.innerHTML = NewBillUI()
@@ -213,7 +223,8 @@ describe("Given I am connected as an employee", () => {
 
           // Le formulaire
           form = screen.getByTestId('form-new-bill')
-
+          // Le bouton
+          send =  getByRole(form, 'button')
           // ses champs obligatoires et non obligatoires
           expenseType = getByTestId(form, 'expense-type') // required
           expenseName = getByTestId(form, 'expense-name')
@@ -238,7 +249,7 @@ describe("Given I am connected as an employee", () => {
           
           Promise.all([p1, p2, p3, p4, p5, p6, p7, p8])
             .then((values) => {
-              // console.info(values); // 8 x true
+              console.info(values); // 8 x true
             })
             .catch((error) => {
               console.warn(error.message)
@@ -246,11 +257,18 @@ describe("Given I am connected as an employee", () => {
         })
         // Nettoyage
         afterEach(() => {
+          errSpy.mockRestore();
+          logSpy.mockRestore();
+          document.body.innerHTML = ''
         });
 
     test("Then ma note de frais est complètement valide", async() => {
-      // Arrange : beforeEach()
-      // Act : beforeEach()
+      // Arrange
+      const exceptedLogMessage = 'https://fakeurl:5678/fakepath/edcba'
+
+      // Act
+      // un fichier justificatif a été téléchargé dans beforeEach()
+
       // Assert
       expect(expenseType.validity.valid && 
             expenseName.validity.valid &&
@@ -260,11 +278,15 @@ describe("Given I am connected as an employee", () => {
             pct.validity.valid &&
             commentary.validity.valid).toBeTruthy()
       await waitFor(() => expect(logSpy).toBeCalledTimes(1))
-      expect(console.log.mock.calls).toEqual([['https://fakeurl:5678/fakepath/edcba']])
+      expect(console.log.mock.calls).toEqual([[exceptedLogMessage]])
     })
     test("Then je remplace le justificatif par un fichier au format non accepté", () => {
       // Arrange
       let compteur = 0;
+      const exceptedLogMessage1 = 'https://fakeurl:5678/fakepath/edcba'
+      const exceptedLogMessage2 = 'Aucun fichier choisi'
+      const exceptedErrorMessage = 'Le fichier justificatif doit être une image (jpeg, jpg ou png) ou un document PDF.'
+
       // compteur = 1 (fichier image uploadé dans beforeEach())
       compteur = screen.getByTestId('file').files.length 
       // Justificatif archive zip
@@ -280,9 +302,62 @@ describe("Given I am connected as an employee", () => {
       expect(compteur).toBe(0) // HTML File a été enlevé du DOM
       expect(logSpy).toBeCalledTimes(2) // Ecrire fakeurl pour fichier accepté, écrire 'Aucun fichier choisi' pour fichier refusé
       expect(errSpy).toBeCalledTimes(1) // Ecrire l'erreur concernant extension non valide
-      expect(console.log.mock.calls).toEqual([['https://fakeurl:5678/fakepath/edcba'], // fichier image beforeEach()
-                                              ['Aucun fichier choisi']]) // fichier archive.zip
-      expect(console.error.mock.calls).toEqual([['Le fichier justificatif doit être une image (jpeg, jpg ou png) ou un document PDF.']])
+      expect(console.log.mock.calls).toEqual([[exceptedLogMessage1], // fichier image beforeEach()
+                                              [exceptedLogMessage2]]) // fichier archive.zip
+      expect(console.error.mock.calls).toEqual([[exceptedErrorMessage]])
+    })
+    test("Then je remplace le justificatif mais il y a une erreur POST", async() => {
+      // Arrange
+      let exceptedErrorMessage = 'fail#1'
+      // Justificatif accepté
+      const ficDoc = new File(['Dummy content'], 'document.pdf', {'type': 'application/pdf'});
+      // Simuler une erreur POST lors du prochain upload d'un justificatif
+      mockStore.bills.mockImplementationOnce( () => {
+        return {  create :  () => { return Promise.reject(exceptedErrorMessage) } }
+      })
+
+      // Act
+      // Changer le fichier justificatif avec un fichier pdf accepté
+       fireEvent.change(file, { target:{files:[ficDoc]} } )
+
+      // Assert
+      await waitFor(() => expect(errSpy).toBeCalled())
+      expect(console.error.mock.calls).toEqual([[exceptedErrorMessage]])
+    })
+    test("Then je suis redirigé sur la liste des notes après avoir envoyé une note valide", async()=> {
+      // Arrange
+      const exceptedHtml = 'Mes notes de frais'
+
+      // Act
+      // Soumettre le formulaire
+      userEvent.click(send)
+
+      // Assert
+      expect(await waitFor(() => screen.getByTestId('tbody'))).toBeTruthy()
+      expect(await waitFor(() => screen.getByText(exceptedHtml))).toBeTruthy()
+    })
+    test("Then une note de frais sans TVA a par défaut un taux à 20 ", async()=> {
+      // Arrange
+      const exceptedPct = 20
+      let updatedPct = 0
+      // Mocker l'update afin de tester la note de frais reçue
+      const spyUpdateBill = jest.spyOn(newBill, 'updateBill')
+      // car handleSubmit() met par défaut la tva à 20 
+      spyUpdateBill.mockImplementation((spyBill) => {
+        // Obtenir le taux de tva après la soumission du formulaire
+        updatedPct = spyBill.pct
+      })
+
+      // Act
+      // Le taux de tva choisie est effacée
+      fireEvent.change(pct, { target: { value: NaN } })
+      // Soumettre le formulaire
+      userEvent.click(send)
+
+      // Assert
+      expect(spyUpdateBill).toHaveBeenCalled()
+      // Le pourcentage de TVA est 20% par défaut
+      expect(updatedPct).toBe(exceptedPct)
     })
   })
 })

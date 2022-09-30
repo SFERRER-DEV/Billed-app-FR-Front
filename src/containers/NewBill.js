@@ -60,7 +60,11 @@ export default class NewBill {
           this.billId = key
           this.fileUrl = fileUrl
           this.fileName = fileName
-        }).catch(error => console.error(error))
+        }).catch(
+           (error) => { console.error(error) }
+        ).finally(
+          () => console.info(this.billId)
+        )
     }
   }
   handleSubmit = e => {

@@ -1,15 +1,14 @@
 const mockedBills = {
-  backend: 'https://fakeurl:5678',
   list() {
     return Promise.resolve([])
   },
-  // bill = formData = upload file
-  create(bill) {
-    return Promise.resolve({fileUrl: `${this.backend}/fakepath/edcba`, 
-                            key: '12345' })
+  // bill = formData upload file
+  async create(bill) {
+    return await Promise.resolve({fileUrl: 'https://fakeurl:5678/fakepath/edcba', 
+                                  key: '12345' })
   },
-  update(bill) {
-    return Promise.resolve({
+  async update(bill) {
+    return await Promise.resolve({
       "id": "12345",
       "vat": bill.vat,
       "status": bill.status,
@@ -22,7 +21,7 @@ const mockedBills = {
       "commentAdmin": bill.commentAdmin,
       "email": bill.email,
       "pct": bill.pct,
-      "fileUrl": `${this.backend}\fakepath\jihgf`,
+      "fileUrl": `https://fakeurl:5678/fakepath/jihgf`,
     })
   },
 }
