@@ -5,7 +5,8 @@ import "@testing-library/jest-dom"
 import {screen, 
         waitFor,
         findByText,
-        getByTestId} from "@testing-library/dom"
+        getByTestId,
+        getByText} from "@testing-library/dom"
 import userEvent from "@testing-library/user-event"
 // Objects des tests
 import BillsUI from "../views/BillsUI.js"
@@ -19,7 +20,7 @@ import { bills } from "../fixtures/bills.js"
 import { localStorageMock } from "../__mocks__/localStorage.js"
 import mockStore from "../__mocks__/store"
 import mockStoreRotten from "../__mocks__/storeRotten"
-// import { downloadFile, viewFile } from '../app/pdf.js'
+
 
 beforeAll(() => {
   // Local Storage
@@ -72,6 +73,7 @@ describe("Given I am connected as an employee", () => {
       // Assert
       expect(dates).toEqual(datesSorted)
     })
+    
   })
 
   describe("When je suis sur la page des notes de frais avec des données corrompues uniquement", () => {
@@ -102,17 +104,11 @@ describe("Given I am connected as an employee", () => {
       const exceptedLogMessage2 = 3 // = 3 notes de frais du mockStoreRotten
       // Il y a des data-id différents sur la page erreur et sur la page des notes de frais 
       let specificElementID;
-      // Une fonction nécessaire
-      // const onNavigate = (pathname) => {
-      //   document.body.innerHTML = ROUTES({ pathname })
-      // }
+
       // Act
       containerBills.getBills().then(data => {
         // Afficher avec des données corrompues
         document.body.innerHTML = BillsUI({ data })
-        // new Bills({
-        //   document, onNavigate, store: mockStoreRotten, localStorage: window.localStorage
-        // })
         specificElementID = 'tbody'
       }).catch(error => {
         // Si les dates invalides n'étaient pas filtrées alors  
@@ -133,16 +129,9 @@ describe("Given I am connected as an employee", () => {
       let specificElementID;
 
       // Act
-      // Une fonction nécessaire
-      // const onNavigate = (pathname) => {
-      //   document.body.innerHTML = ROUTES({ pathname })
-      // }
       containerBills.getBills().then(data => {
         // Afficher avec des données corrompues
         document.body.innerHTML = BillsUI({ data })
-        // new Bills({
-        //   document, onNavigate, store: mockStoreRotten, localStorage: window.localStorage
-        // })
         specificElementID = 'tbody'
       }).catch(error => {
         // Si les dates invalides n'étaient pas filtrées alors  
@@ -157,22 +146,15 @@ describe("Given I am connected as an employee", () => {
       // (attention aux sauts de lignes \n)
       expect(screen.getByTestId('tbody').innerHTML.trim().length).toBe(zeroHtmlContent)
     })
-    test("Then ces notes de frais ne redirigent pas vers la page du message d'erreur", async () => {
+    test("Then il n'y a pas de message d'erreur affiché", async () => {
       // Arrange
       // Il y a des data-id différents sur la page erreur et sur la page des notes de frais 
       let specificElementID;
 
       // Act
-      // Une fonction nécessaire
-      // const onNavigate = (pathname) => {
-      //   document.body.innerHTML = ROUTES({ pathname })
-      // }
       containerBills.getBills().then(data => {
         // Afficher avec des données corrompues
         document.body.innerHTML = BillsUI({ data })
-        // new Bills({
-        //   document, onNavigate, store: mockStoreRotten, localStorage: window.localStorage
-        // })
         specificElementID = 'tbody'
       }).catch(error => {
         // Si les dates invalides n'étaient pas filtrées alors  
@@ -307,8 +289,57 @@ describe("Given I am connected as an employee", () => {
       // Le div proof-container est celui qui contient un document PDF
       expect(screen.getByText(exceptedMessage)).toBeTruthy()
     })
-
   })
+
+  describe("When je suis sur la page des notes de frais avec une erreur d'API", () => {
+        // Arrange
+        let containerBills
+        let logSpy
+        // Préparation commune aux tests
+        beforeEach(() => {
+          // Une fonction nécessaire
+          const onNavigate = (pathname) => {
+            document.body.innerHTML = ROUTES({ pathname })
+          }
+          // Le container Bills est instancié avec un Store corrompu
+          containerBills = new Bills({
+            document, onNavigate, store: mockStore, localStorage: window.localStorage
+          })
+          // Remplace l'implémentation sur le terminal
+          logSpy = jest.spyOn(console, 'log')
+        })
+        // Nettoyage
+        afterEach(() => {
+          logSpy.mockRestore();
+          document.body.innerHTML = ''
+        });
+        test("Then un message affiche une erreur d'authentification", async () => {
+          // Arrange
+          const exceptedErrorMessage = "Erreur 401"
+          jest.spyOn(mockStoreRotten, 'bills')
+          mockStoreRotten.bills.mockImplementationOnce(() => {
+            return {
+              list: async () => {
+                return await Promise.reject(new Error(exceptedErrorMessage))
+              }
+            }
+          })  
+      
+          // Act
+          // Appeler les données du container
+          containerBills.getBills().then(data => {
+            // L'erreur d'authentification empêche l'affichage de la liste des notes de frais
+          }).catch(error => {
+            // Afficher l'erreur implémentée dans le mock
+            document.body.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
+          })
+          
+          // Assert
+          expect(waitFor(() => getByTestId(document.body,'error-message'))).toBeTruthy()
+          expect(waitFor(() => getByText(document.body, exceptedErrorMessage))).toBeTruthy()
+        })        
+  })
+
 
 
 })
