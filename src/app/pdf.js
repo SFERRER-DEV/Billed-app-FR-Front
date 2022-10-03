@@ -37,5 +37,9 @@ export const viewFile = (billUrl, canvas) => {
             });
             });
         })
-    });
+        .catch(err => 
+                // Invalid PDF Exception
+                console.error(`Caught by .catch ${err}`)
+        )
+    })
 }

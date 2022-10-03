@@ -39,7 +39,7 @@ export default class {
       // Le document PDF est à afficher dans un canvas
       const location = $("#modaleFile").find(".modal-body");
 
-      // il faut créer un objet Canvas pour l'utiliser
+      // il faut créer un objet Canvas pour l'utiliser ~ BillsUI 
       let canvas = document.createElement("canvas");
       $(canvas).addClass("bill-proof-container");
       $(canvas).attr("data-testid","justificatif-pdf");
@@ -76,7 +76,7 @@ export default class {
     downloadFile(billUrl, fileName);
 
     // Afficher la modale
-    $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class="bill-proof-container">
+    $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;' class='bill-proof-container'>
       Le justificatif PDF a été téléchargé
       </div>`)
 

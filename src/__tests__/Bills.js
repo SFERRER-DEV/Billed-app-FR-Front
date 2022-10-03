@@ -73,9 +73,7 @@ describe("Given I am connected as an employee", () => {
       // Assert
       expect(dates).toEqual(datesSorted)
     })
-    
   })
-
   describe("When je suis sur la page des notes de frais avec des données corrompues uniquement", () => {
     // Arrange
     let containerBills
@@ -170,7 +168,6 @@ describe("Given I am connected as an employee", () => {
       expect(screen.queryByText('Erreur')).not.toBeInTheDocument()
     })
   })
-
   describe("When je suis sur la page des notes de frais avec des données", () => {
     // L'objet container Bills :
     let containerBills
@@ -194,7 +191,6 @@ describe("Given I am connected as an employee", () => {
     afterEach(() => {
       document.body.innerHTML = ''
     });
-
     test("Then je suis correctement redirigé si je clique sur le bouton nouvelle note de frais", async () => {
       // Arrange                          
       const exceptedMessage = 'Envoyer une note de frais'
@@ -208,7 +204,6 @@ describe("Given I am connected as an employee", () => {
       // Assert :  La page NewBill est bien affichée à l'écran
       expect(await findByText(document.body, exceptedMessage)).toBeInTheDocument()
     })
-
     test("then je clique sur un icone pour voir un justificatif image", async () => {
       // Arrange
       const exceptedProofContainerDataId = 'justificatif-image'
@@ -290,7 +285,6 @@ describe("Given I am connected as an employee", () => {
       expect(screen.getByText(exceptedMessage)).toBeTruthy()
     })
   })
-
   describe("When je suis sur la page des notes de frais avec une erreur d'API", () => {
         // Arrange
         let containerBills
@@ -313,7 +307,7 @@ describe("Given I am connected as an employee", () => {
           logSpy.mockRestore();
           document.body.innerHTML = ''
         });
-        test("Then un message affiche une erreur d'authentification", async () => {
+        test("Then une erreur d'authentification est indiquée par un message 401", async () => {
           // Arrange
           const exceptedErrorMessage = "Erreur 401"
           jest.spyOn(mockStoreRotten, 'bills')
@@ -329,17 +323,15 @@ describe("Given I am connected as an employee", () => {
           // Appeler les données du container
           containerBills.getBills().then(data => {
             // L'erreur d'authentification empêche l'affichage de la liste des notes de frais
-          }).catch(error => {
+          })
+          .catch(error => {
             // Afficher l'erreur implémentée dans le mock
             document.body.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
           })
-          
-          // Assert
-          expect(waitFor(() => getByTestId(document.body,'error-message'))).toBeTruthy()
+          .then(waitFor(() => getByTestId(document.body,'error-message')))
+        
+          // Assert: Erreur 401
           expect(waitFor(() => getByText(document.body, exceptedErrorMessage))).toBeTruthy()
-        })        
+        })
   })
-
-
-
 })

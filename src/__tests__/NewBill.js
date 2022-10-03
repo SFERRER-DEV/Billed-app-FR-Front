@@ -41,9 +41,10 @@ describe("Given I am connected as an employee", () => {
     let logSpy
     // Préparation commune aux tests
     beforeEach(() => {
-      // Le conteneur HTML
+      // Le conteneur HTML...
       const root = document.createElement("div")
       root.setAttribute("id", "root")
+      // ... utilisé dans les tests avec routage par la fonction router()
       document.body.append(root)
 
       // Remplace l'implémentation sur le terminal
@@ -61,7 +62,7 @@ describe("Given I am connected as an employee", () => {
     test("Then le formulaire pour envoyer une note de frais est affiché", async() => {
       // Arrange
       const exceptedHtml = 'Envoyer une note de frais'
-      // Routage: page login
+      // Routage
       router()
 
       // Act
@@ -76,7 +77,7 @@ describe("Given I am connected as an employee", () => {
     test("Then une date corrompue est saisie à la place du calendrier", () => {
       // Arrange
       const exceptedErrorMessage = 'La date de la note de frais est invalide 3131-31-31'
-      // Routage: page login
+      // Routage
       router()
       // se placer sur #employee/bill/new
       window.onNavigate(ROUTES_PATH.NewBill) 
