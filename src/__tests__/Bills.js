@@ -2,7 +2,10 @@
  * @jest-environment jsdom
  */
 import "@testing-library/jest-dom"
-import {screen, waitFor} from "@testing-library/dom"
+import {screen, 
+        waitFor,
+        findByText,
+        getByTestId} from "@testing-library/dom"
 import userEvent from "@testing-library/user-event"
 // Objects des tests
 import BillsUI from "../views/BillsUI.js"
@@ -16,7 +19,7 @@ import { bills } from "../fixtures/bills.js"
 import { localStorageMock } from "../__mocks__/localStorage.js"
 import mockStore from "../__mocks__/store"
 import mockStoreRotten from "../__mocks__/storeRotten"
-import  * as pdf from "../app/pdf"
+// import { downloadFile, viewFile } from '../app/pdf.js'
 
 beforeAll(() => {
   // Local Storage
@@ -26,27 +29,16 @@ beforeAll(() => {
   }))
 })
 afterAll(() => {
-
+  //
 })
 
 describe("Given I am connected as an employee", () => {    
-    // Arrange
-    let containerBills
-
     // Préparation commune aux tests
     beforeEach(() => {
-      // Le conteneur HTML
+      // Le conteneur Html
       const root = document.createElement("div")
       root.setAttribute("id", "root")
       document.body.append(root)
-      // Une fonction nécessaire
-      const onNavigate = (pathname) => {
-        document.body.innerHTML = ROUTES({ pathname })
-      }
-      // L'objet Bills
-      containerBills = new Bills({
-        document, onNavigate, store: mockStore, localStorage: window.localStorage
-      })
     })
     // Nettoyage
     afterEach(() => {
@@ -80,126 +72,14 @@ describe("Given I am connected as an employee", () => {
       // Assert
       expect(dates).toEqual(datesSorted)
     })
-    test("then je clique sur le bouton une nouvelle note de frais", async () => {
-      // Arrange
-      containerBills.getBills().then(data => {
-        root.innerHTML = BillsUI({ data })
-      })
-      // Attendre l'affiche du bouton "Nouvelle note de frais"
-      .then(await waitFor(() => screen.getByTestId('btn-new-bill')))
-
-      const handleClickNewBill = jest.fn(containerBills.handleClickNewBill)
-      const newBill = screen.getByTestId('btn-new-bill')
-      newBill.addEventListener('click', handleClickNewBill)
-      
-      // Act
-      userEvent.click(newBill)
-
-      // Assert
-      expect(handleClickNewBill).toHaveBeenCalled()
-      expect(await screen.findByText('Envoyer une note de frais')).toBeInTheDocument()
-    })
-    test("then je clique sur un icone pour voir le justificatif image", async () => {
-      // Arrange
-      containerBills.getBills().then(data => {
-        root.innerHTML = BillsUI({ data })
-      })
-      // Attendre l'affiche des icones eye
-      .then(await waitFor(() => screen.getAllByTestId('icon-eye')))
-      
-      // Obtenir tous les div contenant des icones Eye pour afficher un justifiactif jpg
-      const divEyesJpg = screen.getAllByTestId('icon-eye')
-                            .filter(ico => ico.attributes['data-file-ext'].value === 'jpg')
-      // Prendre le premier div
-      const iconEye = divEyesJpg[0]
-
-      // Définir la fonction appelée par l'action
-      const handleClickIconEye = jest.fn(() => containerBills.handleClickIconEye(iconEye))
-
-      // Ajouter l'évènement à l'icone pour voir un justificatif image
-      iconEye.addEventListener('click', handleClickIconEye)
-
-      // Act
-      userEvent.click(iconEye)
-
-      // Assert
-      expect(handleClickIconEye).toHaveBeenCalled()
-      expect(await waitFor(() => screen.getByTestId('justificatif-image'))).toBeTruthy()
-    })
-    test("then je clique sur un icone pour voir le justificatif pdf", async () => {
-      // Arrange
-      containerBills.getBills().then(data => {
-        root.innerHTML = BillsUI({ data })
-      })
-      // Attendre l'affichage des icones eye
-      .then(await waitFor(() => screen.getAllByTestId('icon-eye')))
-
-      // Obtenir tous les div contenant des icones Eye pour afficher un justificatif jpg
-      const divEyesPdf = screen.getAllByTestId('icon-eye')
-                            .filter(ico => ico.attributes['data-file-ext'].value === 'pdf')
-      // Prendre le premier div
-      const iconEye = divEyesPdf[0]
-
-      // Définir la fonction appelée par l'action
-      const handleClickIconEye = jest.fn(() => containerBills.handleClickIconEye(iconEye))
-      // Ajouter l'évènement à l'icone pour voir un justificatif PDF
-      iconEye.addEventListener('click', handleClickIconEye)
-
-      // Mock de la fonction viewFile qui utilise la librairie Pdfjs
-      jest.spyOn(pdf, 'viewFile')
-      pdf.viewFile.mockImplementation((billUrl, canvas) => {})
-      
-      // Act
-      userEvent.click(iconEye)
-
-      // Assert
-      expect(handleClickIconEye).toHaveBeenCalled()
-      expect(screen.getByTestId('justificatif-pdf')).toBeTruthy()
-    })
-    test("then je clique sur un icone pour télécharger le justificatif pdf", async () => {
-      // Arrange
-      containerBills.getBills().then(data => {
-        root.innerHTML = BillsUI({ data })
-      })
-      // Attendre l'affichage des icones download
-      .then(await waitFor(() => screen.getAllByTestId('icon-download')))
-
-      // Obtenir tous les div contenant des icones Download pour téléchager un justificatif PDF
-      const divDownloadsPdf = screen.getAllByTestId('icon-download')
-                            .filter(ico => ico.attributes['data-file-ext'].value === 'pdf')
-      // Prendre le premier div
-      const iconDownload = divDownloadsPdf[0]
-
-      // Définir la fonction appelée par l'action
-      const handleClickIconDownload = jest.fn(() => containerBills.handleClickIconDownload(iconDownload))
-      // Ajouter l'évènement à l'icone pour télécharger un justificatif pdf
-      iconDownload.addEventListener('click', handleClickIconDownload)
-
-      // Mock de la fonction downloadFile qui utilise la librairie File-Saver
-      jest.spyOn(pdf, 'downloadFile')
-      pdf.downloadFile.mockImplementation((billUrl, canvas) => {})
-      
-      // Act
-      userEvent.click(iconDownload)
-
-      // Assert
-      expect(handleClickIconDownload).toHaveBeenCalled()
-      expect(screen.getByText("Le justificatif PDF a été téléchargé")).toBeTruthy()
-    })
   })
-})
 
-describe("Given je suis connecté comme employé avec des notes aux dates corrompues", () => {
-  describe("When je suis sur la page des factures", () => {
+  describe("When je suis sur la page des notes de frais avec des données corrompues uniquement", () => {
     // Arrange
     let containerBills
     let logSpy
     // Préparation commune aux tests
     beforeEach(() => {
-      // Le conteneur HTML
-      const root = document.createElement("div")
-      root.setAttribute("id", "root")
-      document.body.append(root)
       // Une fonction nécessaire
       const onNavigate = (pathname) => {
         document.body.innerHTML = ROUTES({ pathname })
@@ -209,81 +89,226 @@ describe("Given je suis connecté comme employé avec des notes aux dates corrom
         document, onNavigate, store: mockStoreRotten, localStorage: window.localStorage
       })
       // Remplace l'implémentation sur le terminal
-      logSpy = jest.spyOn(console, 'log').mockImplementation(()=>{});  
+      logSpy = jest.spyOn(console, 'log')
     })
     // Nettoyage
     afterEach(() => {
       logSpy.mockRestore();
       document.body.innerHTML = ''
     });
-    test("Then la console écrit avoir reçu un nombre de notes de frais", async () => {
+    test("Then la console écrit le nombre de notes de frais reçues", async () => {
       // Arrange
-      // Il n'y a pas d'élement hmtl avec un data-id commun aux deux pages
-      let elementId;
-
+      const exceptedLogMessage1 = 'length'
+      const exceptedLogMessage2 = 3 // = 3 notes de frais du mockStoreRotten
+      // Il y a des data-id différents sur la page erreur et sur la page des notes de frais 
+      let specificElementID;
+      // Une fonction nécessaire
+      // const onNavigate = (pathname) => {
+      //   document.body.innerHTML = ROUTES({ pathname })
+      // }
       // Act
       containerBills.getBills().then(data => {
         // Afficher avec des données corrompues
-        root.innerHTML = BillsUI({ data })
-        elementId = 'tbody'
+        document.body.innerHTML = BillsUI({ data })
+        // new Bills({
+        //   document, onNavigate, store: mockStoreRotten, localStorage: window.localStorage
+        // })
+        specificElementID = 'tbody'
       }).catch(error => {
-        // Si les dates invalides n'étaient pas filtrées alors elles 
-        // lèveraient lors du rendu une exception levée par leur custom formatage.
-        root.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
-        elementId = 'error-message'
+        // Si les dates invalides n'étaient pas filtrées alors  
+        // leur rendu léverait une exception à cause de leur custom formatage.
+        document.body.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
+        specificElementID = 'error-message'
       })
 
       // Assert
-      expect(await waitFor(() => screen.getByTestId(elementId))).toBeTruthy()
-      // Il ya a 3 notes de frais corrompues mockées
-      expect(console.log.mock.calls).toEqual([["length", 3]]);
+      expect(await waitFor(() => screen.getByTestId(specificElementID))).toBeTruthy()
+      // Il y a 3 notes de frais corrompues filtrées avant l'affichage
+      expect(console.log.mock.calls).toEqual([[exceptedLogMessage1, exceptedLogMessage2]]);
     })
-    test("Then le tableau dans la page n'affiche pas de ligne html pour ces notes de frais.", async () => {
+    test("Then le tableau dans la page n'affiche pas de ligne html.", async () => {
       // Arrange
-      // Il n'y a pas d'élement hmtl avec un data-id commun aux deux pages
-      let elementId;
+      const zeroHtmlContent = 0
+      // Il y a des data-id différents sur la page erreur et sur la page des notes de frais 
+      let specificElementID;
 
       // Act
+      // Une fonction nécessaire
+      // const onNavigate = (pathname) => {
+      //   document.body.innerHTML = ROUTES({ pathname })
+      // }
       containerBills.getBills().then(data => {
         // Afficher avec des données corrompues
-        root.innerHTML = BillsUI({ data })
-        elementId = 'tbody'
-      })
-      .catch(error => {
-        // Si les dates invalides n'étaient pas filtrées alors elles 
-        // lèveraient lors du rendu une exception levée par leur custom formatage.
-        root.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
-        elementId = 'error-message'
+        document.body.innerHTML = BillsUI({ data })
+        // new Bills({
+        //   document, onNavigate, store: mockStoreRotten, localStorage: window.localStorage
+        // })
+        specificElementID = 'tbody'
+      }).catch(error => {
+        // Si les dates invalides n'étaient pas filtrées alors  
+        // leur rendu léverait une exception à cause de leur custom formatage.
+        document.body.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
+        specificElementID = 'error-message'
       })
 
       // Assert
-      expect(await waitFor(() => screen.getByTestId(elementId))).toBeTruthy()
-      // aucune notes de frais ne doit pas être affichée
+      expect(await waitFor(() => screen.getByTestId(specificElementID))).toBeTruthy()
+      // aucune note de frais ne doit pas être affichée et présenté dans le tableau Html
       // (attention aux sauts de lignes \n)
-      expect(screen.getByTestId('tbody').innerHTML.trim().length).toBe(0)
+      expect(screen.getByTestId('tbody').innerHTML.trim().length).toBe(zeroHtmlContent)
     })
     test("Then ces notes de frais ne redirigent pas vers la page du message d'erreur", async () => {
       // Arrange
-      // Il n'y a pas d'élement hmtl avec un data-id commun aux deux pages
-      let elementId;
+      // Il y a des data-id différents sur la page erreur et sur la page des notes de frais 
+      let specificElementID;
 
       // Act
-      await containerBills.getBills().then(data => {
+      // Une fonction nécessaire
+      // const onNavigate = (pathname) => {
+      //   document.body.innerHTML = ROUTES({ pathname })
+      // }
+      containerBills.getBills().then(data => {
         // Afficher avec des données corrompues
-        root.innerHTML = BillsUI({ data })
-        elementId = 'tbody'
+        document.body.innerHTML = BillsUI({ data })
+        // new Bills({
+        //   document, onNavigate, store: mockStoreRotten, localStorage: window.localStorage
+        // })
+        specificElementID = 'tbody'
       }).catch(error => {
-        // Si les dates invalides n'étaient pas filtrées alors elles 
-        // lèveraient lors du rendu une exception levée par leur custom formatage:
-        // 'RangeError: Invalid time value'
-        root.innerHTML =  ROUTES({pathname: ROUTES_PATH.Bills, error })     
-        elementId = 'error-message'
+        // Si les dates invalides n'étaient pas filtrées alors  
+        // leur rendu léverait une exception à cause de leur custom formatage.
+        document.body.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
+        specificElementID = 'error-message'
       })
 
       // Assert
-      expect(await waitFor(() => screen.getByTestId(elementId))).toBeTruthy()
-      // Les dates invalides ont été filtrées et ne sont pas envoyées au rendu
+      expect(await waitFor(() => screen.getByTestId(specificElementID))).toBeTruthy()
+      // Aucun message d'erreur n'est affiché
       expect(screen.queryByText(/RangeError/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Erreur')).not.toBeInTheDocument()
     })
   })
+
+  describe("When je suis sur la page des notes de frais avec des données", () => {
+    // L'objet container Bills :
+    let containerBills
+    // Préparation commune aux tests
+    beforeEach(async () => {
+      // Une fonction nécessaire
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname })
+      }
+      // L'objet container Bills :
+      containerBills = new Bills({
+        document, onNavigate, store: mockStore, localStorage: window.localStorage
+      })
+      containerBills.getBills().then(data => {
+          root.innerHTML = BillsUI({ data })
+          new Bills({document, onNavigate, store: mockStore, localStorage: window.localStorage})
+      })
+      .then(await waitFor(() => screen.getByTestId('btn-new-bill')))
+    })
+    // Nettoyage
+    afterEach(() => {
+      document.body.innerHTML = ''
+    });
+
+    test("Then je suis correctement redirigé si je clique sur le bouton nouvelle note de frais", async () => {
+      // Arrange                          
+      const exceptedMessage = 'Envoyer une note de frais'
+
+      // Bouton Nouvelle note de frais
+      const button = getByTestId(document.body, 'btn-new-bill')
+
+      // Act
+      userEvent.click(button)
+
+      // Assert :  La page NewBill est bien affichée à l'écran
+      expect(await findByText(document.body, exceptedMessage)).toBeInTheDocument()
+    })
+
+    test("then je clique sur un icone pour voir un justificatif image", async () => {
+      // Arrange
+      const exceptedProofContainerDataId = 'justificatif-image'
+      // Obtenir tous les div avec des icones eye des justificatifs image JPG
+      const divEyesJpg = screen.getAllByTestId('icon-eye')
+                              .filter(ico => ico.attributes['data-file-ext'].value === 'jpg')
+      // Prendre le premier div
+      const iconEye = divEyesJpg[0]
+      // 1/ Définir la fonction appelée par l'action
+      const handleClickIconEye = jest.fn(() => containerBills.handleClickIconEye(iconEye))
+      // 2/ Ajouter l'évènement à l'icone pour voir un justificatif image
+      iconEye.addEventListener('click', handleClickIconEye)
+      // 3/ Espioner + implémenter 
+      const spyHandleClickIconEye = jest.spyOn(containerBills, 'handleClickIconEye').mockImplementation()
+
+      // Act 
+      userEvent.click(iconEye)
+
+      // Assert
+      expect(spyHandleClickIconEye).toHaveBeenCalled()
+      // Le div proof-container est celui qui contient une image
+      expect(await waitFor(() =>getByTestId(document.body, exceptedProofContainerDataId))).toBeTruthy()
+    })
+    test("then je clique sur un icone pour voir un justificatif pdf", async () => {
+      // Arrange
+      const exceptedProofContainerDataId = 'justificatif-pdf'
+      // Mocker l'appel à la bibliothèque PDF.js
+      const pdf = require('../app/pdf')
+      jest.spyOn(pdf,'viewFile').mockImplementation(() => {
+        return Promise.resolve('Fake viewed !')
+      })            
+      // Obtenir tous les div avec des icones eye des justifactifs PDF
+      const divEyesJpg = screen.getAllByTestId('icon-eye')
+                              .filter(ico => ico.attributes['data-file-ext'].value === 'pdf')
+      // Prendre le premier div
+      const iconEye = divEyesJpg[0]
+      // 1/ Définir la fonction appelée par l'action
+      const handleClickIconEye = jest.fn(() => containerBills.handleClickIconEye(iconEye))
+      // 2/ Ajouter l'évènement à l'icone pour voir un justificatif image
+      iconEye.addEventListener('click', handleClickIconEye)
+      // 3/ Espioner + implémenter 
+      const spyHandleClickIconEye = jest.spyOn(containerBills, 'handleClickIconEye').mockImplementation()
+
+      // Act 
+      userEvent.click(iconEye)
+
+      // Assert
+      expect(spyHandleClickIconEye).toHaveBeenCalled()
+      // Le div proof-container est celui qui contient un document PDF
+      expect(await waitFor(() =>getByTestId(document.body, exceptedProofContainerDataId))).toBeTruthy()
+    })
+    test("then je clique sur un icone pour télécharger un justificatif pdf", async () => {
+      // Arrange
+      const exceptedMessage = 'Le justificatif PDF a été téléchargé'
+      // Mocker l'appel à la bibliothèque file-saver
+      const pdf = require('../app/pdf')
+      jest.spyOn(pdf,'downloadFile').mockImplementation(() => {
+        return Promise.resolve('Fake downloaded !')
+      })      
+
+      // Obtenir tous les div avec des icones dowanload des justifactifs PDF
+      const divDownloadsPdf = screen.getAllByTestId('icon-download')
+                               .filter(ico => ico.attributes['data-file-ext'].value === 'pdf')
+      // Prendre le premier div
+      const iconDownload = divDownloadsPdf[0]
+      // 1/ Définir la fonction appelée par l'action
+      const handleClickIconDownload = jest.fn(() => containerBills.handleClickIconDownload(iconDownload))
+      // 2/ Ajouter l'évènement à l'icone pour voir un justificatif image
+      iconDownload.addEventListener('click', handleClickIconDownload)
+      // 3/ Espioner + implémenter 
+      const spyhandleClickIconDownload = jest.spyOn(containerBills, 'handleClickIconDownload').mockImplementation()
+
+      // Act 
+      userEvent.click(iconDownload)
+
+      // Assert
+      expect(spyhandleClickIconDownload).toHaveBeenCalled()
+      // Le div proof-container est celui qui contient un document PDF
+      expect(screen.getByText(exceptedMessage)).toBeTruthy()
+    })
+
+  })
+
+
 })
