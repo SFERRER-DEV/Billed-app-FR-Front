@@ -289,6 +289,8 @@ describe("Given I am connected as an employee", () => {
         // Arrange
         let containerBills
         let logSpy
+        // Le message d'erreur attendu
+        let exceptedErrorMessage 
         // Préparation commune aux tests
         beforeEach(() => {
           // Une fonction nécessaire
@@ -299,6 +301,15 @@ describe("Given I am connected as an employee", () => {
           containerBills = new Bills({
             document, onNavigate, store: mockStore, localStorage: window.localStorage
           })
+          // Mocker l'appel de la liste des notes de frais
+          jest.spyOn(mockStore, 'bills')
+          mockStore.bills.mockImplementationOnce(() => {
+            return {
+              list: () => {
+                return Promise.reject(new Error(exceptedErrorMessage))
+              }
+            }
+          })  
           // Remplace l'implémentation sur le terminal
           logSpy = jest.spyOn(console, 'log')
         })
@@ -309,20 +320,12 @@ describe("Given I am connected as an employee", () => {
         });
         test("Then une erreur d'authentification est indiquée par un message 401", async () => {
           // Arrange
-          const exceptedErrorMessage = "Erreur 401"
-          jest.spyOn(mockStoreRotten, 'bills')
-          mockStoreRotten.bills.mockImplementationOnce(() => {
-            return {
-              list: async () => {
-                return await Promise.reject(new Error(exceptedErrorMessage))
-              }
-            }
-          })  
+          exceptedErrorMessage = "Erreur 401"
       
           // Act
           // Appeler les données du container
           containerBills.getBills().then(data => {
-            // L'erreur d'authentification empêche l'affichage de la liste des notes de frais
+            // une erreur d'authentification empêche l'affichage de la liste des notes de frais
           })
           .catch(error => {
             // Afficher l'erreur implémentée dans le mock
@@ -330,8 +333,45 @@ describe("Given I am connected as an employee", () => {
           })
           .then(waitFor(() => getByTestId(document.body,'error-message')))
         
-          // Assert: Erreur 401
+          // Assert: Une erreur 401 est affiché
           expect(waitFor(() => getByText(document.body, exceptedErrorMessage))).toBeTruthy()
         })
+
+        test("Then une erreur de serveur est indiquée par un message 500", async () => {
+            // Arrange
+            const exceptedErrorMessage = "Erreur 500"
+
+            // Act
+            // Appeler les données du container
+            containerBills.getBills().then(data => {
+              // L'erreur d'authentification empêche l'affichage de la liste des notes de frais
+            })
+            .catch(error => {
+              // Afficher l'erreur implémentée dans le mock
+              document.body.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
+            })
+            .then(waitFor(() => getByTestId(document.body,'error-message')))
+
+            // Assert: Erreur 500
+            expect(waitFor(() => getByText(document.body, exceptedErrorMessage))).toBeTruthy()          
+      })
+      test("Then une ressource indisponible est indiquée par un message 404", async () => {
+        // Arrange
+        const exceptedErrorMessage = "Erreur 404"
+
+        // Act
+        // Appeler les données du container
+        containerBills.getBills().then(data => {
+          // L'erreur d'authentification empêche l'affichage de la liste des notes de frais
+        })
+        .catch(error => {
+          // Afficher l'erreur implémentée dans le mock
+          document.body.innerHTML = ROUTES({pathname: ROUTES_PATH.Bills, error })
+        })
+        .then(waitFor(() => getByTestId(document.body,'error-message')))
+
+        // Assert: Erreur 404
+        expect(waitFor(() => getByText(document.body, exceptedErrorMessage))).toBeTruthy()          
+  })
   })
 })
