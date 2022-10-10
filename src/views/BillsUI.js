@@ -23,7 +23,8 @@ const row = (bill) => {
 const rows = (data) => {
   return (data && data.length) ? 
   // Les changements de justificatifs ajoutent des enregistrements incomplets en base de données
-  // et les dates peuvent s'enregistrées à null.
+  // et les dates peuvent s'enregistrées à null. 
+  // Les dates corrompues sont filtrées et pas envoyées au formatage
   data
   .filter(bill => bill.status !== null && !isNaN(Date.parse(bill.date)))
   .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))

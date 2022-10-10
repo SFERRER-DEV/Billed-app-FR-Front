@@ -204,7 +204,7 @@ describe("Given I am connected as an employee", () => {
       // Assert :  La page NewBill est bien affichée à l'écran
       expect(await findByText(document.body, exceptedMessage)).toBeInTheDocument()
     })
-    test("then je clique sur un icone pour voir un justificatif image", async () => {
+    test("Then je clique sur un icone pour voir un justificatif image", async () => {
       // Arrange
       const exceptedProofContainerDataId = 'justificatif-image'
       // Obtenir tous les div avec des icones eye des justificatifs image JPG
@@ -227,7 +227,7 @@ describe("Given I am connected as an employee", () => {
       // Le div proof-container est celui qui contient une image
       expect(await waitFor(() =>getByTestId(document.body, exceptedProofContainerDataId))).toBeTruthy()
     })
-    test("then je clique sur un icone pour voir un justificatif pdf", async () => {
+    test("Then je clique sur un icone pour voir un justificatif pdf", async () => {
       // Arrange
       const exceptedProofContainerDataId = 'justificatif-pdf'
       // Mocker l'appel à la bibliothèque PDF.js
@@ -255,7 +255,7 @@ describe("Given I am connected as an employee", () => {
       // Le div proof-container est celui qui contient un document PDF
       expect(await waitFor(() =>getByTestId(document.body, exceptedProofContainerDataId))).toBeTruthy()
     })
-    test("then je clique sur un icone pour télécharger un justificatif pdf", async () => {
+    test("Then je clique sur un icone pour télécharger un justificatif pdf", async () => {
       // Arrange
       const exceptedMessage = 'Le justificatif PDF a été téléchargé'
       // Mocker l'appel à la bibliothèque file-saver
