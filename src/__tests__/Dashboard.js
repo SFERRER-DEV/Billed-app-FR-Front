@@ -91,6 +91,41 @@ describe('Given I am connected as an Admin', () => {
       await waitFor(() => screen.getByTestId(`open-billBeKy5Mo4jkmdfPGYpTxZ`) )
       expect(screen.getByTestId(`open-billBeKy5Mo4jkmdfPGYpTxZ`)).toBeTruthy()
     })
+
+    test("Then je replie la catégorie En attente pour masquer ses notes de frais", async() => {
+      // Arrange
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname })
+      }
+
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Admin'
+      }))
+
+      const dashboard = new Dashboard({
+        document, onNavigate, store: null, bills:bills, localStorage: window.localStorage
+      })
+      document.body.innerHTML = DashboardUI({ data: { bills } })
+
+      const handleShowTickets1 = jest.fn((e) => dashboard.handleShowTickets(e, bills, 1))
+      
+      const icon1 = screen.getByTestId('arrow-icon1')
+
+      icon1.addEventListener('click', handleShowTickets1)
+
+      // Act
+      userEvent.click(icon1) // Déplier
+      userEvent.click(icon1) // Replier
+
+      // Assert     
+      const pendingBills = await waitFor(() => screen.queryAllByTestId(/open-bill/))
+      // Aucune note de frais en attente n'est affichée puisque la catégorie est repliée
+      expect(pendingBills.length).toBe(0)
+      // Le compteur de clic du container Dashboard doit être paire
+      expect(dashboard.counter % 2).toBe(0)   
+    })
+    
   })
 
   describe('When I am on Dashboard page and I click on edit icon of a card', () => {
@@ -317,9 +352,6 @@ describe("Given Je suis connecté en Admin au tableau de bord sur les notes de f
       type: 'Admin'
     }))
   })
-  afterEach(() => {
-    //
-  })
   describe("When J'édite sur une note de frais", () => {
     // Arrange
     // Le container testé
@@ -378,11 +410,10 @@ describe("Given Je suis connecté en Admin au tableau de bord sur les notes de f
       expect(await waitFor(()=> screen.getByTestId(`open-bill${idBillPDF}`))).toBeTruthy()
       // Le deux notes de frais PDF et JPG ont été trouvées dans les bllls du store mocké
       expect(testingBills.length).toBe(2)
-    })    
+    })
     afterEach(() => {
       document.body.innerHTML = ''
-      //pdf.mockRestore()
-    })
+    })    
     test("Then je vois le justificatif PDF d'une note de frais", async () => {
       // Arrange
       // Le nom du fichier PDF attendu dans le titre de la modale
