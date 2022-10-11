@@ -98,8 +98,9 @@ export default class {
           .map(doc => {
             try {
               return {
-                // Obtenir les données décomposées telles qu'en base de données (=brutes).
-                // Les données sont formatées lors du rendu et non maintenant
+                // Obtenir les données brutes telles qu'en base de données.
+                // Les données sont formatées lors du rendu et non maintenant:
+                //  - formatDate et formatStatus sont dans BillsUI
                 ...doc
               }
             } catch(e) {
@@ -108,8 +109,8 @@ export default class {
               console.log(e,'for',doc)
               return {
                 ...doc,
-                // Ce remplacement des propriétés après la décomposition n'est plus utile 
-                // car il n'y a plus de formatage ici
+                // Ce remplacement des propriétés lors d'une erreur pendant la décomposition 
+                /// n'est plus utile car le formatage ne se fait plus ici
                 // date: doc.date,
                 // status: doc.status
               }

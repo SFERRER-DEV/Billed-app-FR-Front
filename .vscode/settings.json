@@ -1,5 +1,11 @@
 {
-        "liveServer.settings.root":"/",
-        "liveServer.settings.port": 8080,
-        "jest.autoRun": "off"
+  "liveServer.settings.root": "/",
+  "liveServer.settings.port": 8080,
+  "jest.autoRun": "off",
+  "prettier.requireConfig": true,
+  "typescript.format.enable": false,
+  "json.format.enable": false,
+  "html.format.enable": false,
+  "css.format.enable": false,
+  "editor.fontSize": 12
 }
